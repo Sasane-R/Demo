@@ -1,0 +1,51 @@
+<!doctype html><meta charset="utf-8"><script>
+// 120 BPM soundtrack, rendered offline. Kick on every beat, a hit on each scene change.
+window.renderAudio=async function(){
+  const SR=48000, DUR=15.6, B=0.5;
+  const ctx=new OfflineAudioContext(2,Math.ceil(SR*DUR),SR);
+  const master=ctx.createGain(); master.gain.value=0.55;
+  const comp=ctx.createDynamicsCompressor(); comp.threshold.value=-14; comp.ratio.value=4; comp.attack.value=0.003; comp.release.value=0.12;
+  master.connect(comp); comp.connect(ctx.destination);
+  // music bus with sidechain-style ducking on each kick
+  const bus=ctx.createGain(); bus.connect(master);
+  const noiseBuf=ctx.createBuffer(1,SR*2,SR); { const d=noiseBuf.getChannelData(0); let s=12345; for(let i=0;i<d.length;i++){ s=(s*1103515245+12345)&0x7fffffff; d[i]=s/0x3fffffff-1; } }
+  const noise=(t,dur,{type='highpass',f=7000,q=0.7,g=0.3,a=0.001,pan=0}={})=>{ const n=ctx.createBufferSource(); n.buffer=noiseBuf; const fl=ctx.createBiquadFilter(); fl.type=type; fl.frequency.value=f; fl.Q.value=q; const e=ctx.createGain(); e.gain.setValueAtTime(0,t); e.gain.linearRampToValueAtTime(g,t+a); e.gain.exponentialRampToValueAtTime(0.0001,t+dur); const p=ctx.createStereoPanner(); p.pan.value=pan; n.connect(fl); fl.connect(e); e.connect(p); p.connect(master); n.start(t,Math.random()*0.5); n.stop(t+dur+0.05); return {fl,e}; };
+  const kick=(t,g=1)=>{ const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(46,t+0.12); const e=ctx.createGain(); e.gain.setValueAtTime(0,t); e.gain.linearRampToValueAtTime(0.95*g,t+0.003); e.gain.exponentialRampToValueAtTime(0.001,t+0.42); o.connect(e); e.connect(master); o.start(t); o.stop(t+0.45);
+    noise(t,0.02,{type:'highpass',f:3000,g:0.18*g});
+    bus.gain.setValueAtTime(0.35,t); bus.gain.linearRampToValueAtTime(1,t+0.22); };
+  const tone=(t,f,dur,{type='sawtooth',g=0.1,cut=1800,q=1,a=0.005,r=0.2,pan=0,dest=bus}={})=>{ const o=ctx.createOscillator(); o.type=type; o.frequency.value=f; const fl=ctx.createBiquadFilter(); fl.type='lowpass'; fl.frequency.setValueAtTime(cut,t); fl.frequency.exponentialRampToValueAtTime(Math.max(120,cut*0.3),t+dur); fl.Q.value=q; const e=ctx.createGain(); e.gain.setValueAtTime(0,t); e.gain.linearRampToValueAtTime(g,t+a); e.gain.setValueAtTime(g,t+Math.max(a,dur-r)); e.gain.exponentialRampToValueAtTime(0.0001,t+dur); const p=ctx.createStereoPanner(); p.pan.value=pan; o.connect(fl); fl.connect(e); e.connect(p); p.connect(dest); o.start(t); o.stop(t+dur+0.02); };
+  const mtof=m=>440*Math.pow(2,(m-69)/12);
+  // progression, one chord per bar (2s): Am  F  C  G  Am  F  C  | Cmaj9 ring
+  const bars=[[57,60,64,67],[53,57,60,64],[48,55,60,64],[55,59,62,67],[57,60,64,67],[53,57,60,64],[48,55,64,71],[48,55,64,71]];
+  const roots=[45,41,48,43,45,41,36,36];
+  for(let b=0;b<30;b++){ const t=b*B; kick(t, b===24?1.15:1);
+    // closed hats on the off-beat
+    if(b>=2&&b<26) noise(t+B/2,0.05,{f:8000,g:0.11,pan:0.2});
+    // clap on 2 & 4 from bar 2
+    if(b>=4&&b<25&&b%2===1) noise(t,0.16,{type:'bandpass',f:1600,q:0.9,g:0.32,pan:-0.05});
+    const bar=Math.floor(b/4);
+    // bass 8ths from bar 1
+    if(b>=4&&b<25){ for(let k=0;k<2;k++) tone(t+k*B/2,mtof(roots[bar]+(k?12:0)),0.22,{type:'sawtooth',g:0.13,cut:700,q:4,r:0.08}); }
+  }
+  // pad per bar
+  for(let bar=0;bar<8;bar++){ const t=bar*2; const len=bar===6?3.6:2.0; if(bar===7) continue; bars[bar].forEach((m,i)=>tone(t,mtof(m),len+0.1,{type:'triangle',g:bar===0?0.035:0.045,cut:2600,a:0.05,r:0.4,pan:(i-1.5)*0.3})); }
+  // arp plucks on every 8th from bar 1 (something changes every beat)
+  for(let s=8;s<50;s++){ const t=s*B/2; const bar=Math.floor(t/2); const ch=bars[bar]; const m=ch[[0,2,1,3,2,1,3,2][s%8]]+12; tone(t,mtof(m),0.18,{type:'square',g:0.035,cut:3200,q:2,r:0.12,pan:(s%2?0.35:-0.35)}); }
+  // scene-change hits: low tom + noise crack + chord stab
+  const hit=(t,big=false)=>{ const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(big?120:95,t); o.frequency.exponentialRampToValueAtTime(40,t+0.5); const e=ctx.createGain(); e.gain.setValueAtTime(big?0.8:0.55,t); e.gain.exponentialRampToValueAtTime(0.001,t+(big?0.9:0.5)); o.connect(e); e.connect(master); o.start(t); o.stop(t+1);
+    noise(t,big?0.7:0.35,{type:'bandpass',f:big?2400:3200,q:0.6,g:big?0.5:0.32});
+    const bar=Math.min(7,Math.floor((t+0.01)/2)); bars[bar].forEach((m,i)=>tone(t,mtof(m+12),big?0.9:0.4,{type:'sawtooth',g:big?0.06:0.045,cut:big?5200:3800,q:1,r:big?0.6:0.3,pan:(i-1.5)*0.4,dest:master})); };
+  [2.0,6.0,8.0,10.0].forEach(t=>hit(t)); hit(12.0,true); hit(13.0,true);
+  // rising noise into the big beat
+  { const r=noise(10.9,1.12,{type:'bandpass',f:600,q:1.2,g:0.0001}); r.fl.frequency.setValueAtTime(500,10.9); r.fl.frequency.exponentialRampToValueAtTime(7000,12.0); r.e.gain.cancelScheduledValues(10.9); r.e.gain.setValueAtTime(0.0001,10.9); r.e.gain.exponentialRampToValueAtTime(0.22,11.98); r.e.gain.linearRampToValueAtTime(0,12.0); }
+  // UI sounds: cursor clicks, keystrokes
+  [2.0,4.0,5.0,7.55,9.08,10.0,11.0].forEach(t=>{ noise(t,0.03,{type:'bandpass',f:4200,q:2,g:0.35}); tone(t,1800,0.03,{type:'sine',g:0.08,cut:8000,dest:master}); });
+  for(let i=0;i<16;i++) noise(2.45+i*(0.55/16),0.02,{type:'bandpass',f:5200,q:3,g:0.12,pan:0.1});
+  for(let i=0;i<6;i++) noise(3.0+i*(0.35/6),0.02,{type:'bandpass',f:5200,q:3,g:0.12,pan:0.1});
+  // final ring: Cmaj9 bell
+  [60,64,67,71,74].forEach((m,i)=>tone(13.0+i*0.04,mtof(m+12),2.5,{type:'sine',g:0.05,cut:9000,a:0.005,r:2.2,pan:(i-2)*0.3,dest:master}));
+  const buf=await ctx.startRendering();
+  const toB64=ch=>{ const d=buf.getChannelData(ch); const fade=SR*0.6; const i16=new Int16Array(SR*15); for(let i=0;i<i16.length;i++){ let v=d[i]; if(i>i16.length-fade) v*= (i16.length-i)/fade; i16[i]=Math.max(-32767,Math.min(32767,v*32767)); } let s=''; const u8=new Uint8Array(i16.buffer); for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000)); return btoa(s); };
+  return {sr:SR,l:toB64(0),r:toB64(1)};
+};
+</script>

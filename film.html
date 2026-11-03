@@ -1,0 +1,577 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Dub product film</title>
+<style>
+@font-face{font-family:Satoshi;src:url(Satoshi-Variable.woff2) format('woff2');font-weight:300 900;font-style:normal}
+:root{--blue:#3b82f6;--n50:#fafafa;--n100:#f5f5f5;--n200:#e5e5e5;--n300:#d4d4d4;--n400:#a3a3a3;--n500:#737373;--n600:#525252;--n700:#404040;--n800:#262626;--n900:#171717;--n950:#0a0a0a}
+*{box-sizing:border-box}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#fff;font-family:Satoshi,system-ui,sans-serif;color:var(--n950);-webkit-font-smoothing:antialiased}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:#fff}
+#camwrap{position:absolute;inset:0}
+#world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+.scene{position:absolute;inset:0}
+.bg{position:absolute;left:-600px;top:-600px;right:-600px;bottom:-600px;background:#fff}
+.abs{position:absolute}
+/* masks */
+.m{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .04em .14em;margin:0 -.04em -.14em}
+.mi{display:inline-block}
+/* hook */
+#hook{position:absolute;left:0;top:0;width:1920px;height:1080px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:176px;line-height:1.02;letter-spacing:-.045em}
+#hook .line{white-space:nowrap}
+#hook .gap{display:inline-block;width:.24em}
+.blue{color:var(--blue)}
+/* generic ui */
+.card{position:absolute;background:#fff;border:1px solid var(--n200);border-radius:12px}
+.lbl{font-size:14px;font-weight:500;color:var(--n700);display:flex;align-items:center;gap:6px}
+.info{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--n400);display:inline-block;position:relative}
+.info:after{content:"";position:absolute;left:4.7px;top:5px;width:1.6px;height:4.5px;background:var(--n400);border-radius:1px}
+.inp{position:relative;height:38px;border:1px solid var(--n300);border-radius:6px;background:#fff;font-size:14px;display:flex;align-items:center;padding:0 12px;color:var(--n900);box-shadow:0 1px 2px rgba(0,0,0,.05);white-space:nowrap;overflow:hidden}
+.ph{color:var(--n400)}
+.caret{display:inline-block;width:1.5px;height:18px;background:var(--n900);margin-left:1px}
+.btn{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 6px 0 10px;border-radius:8px;background:#000;color:#fff;font-size:14px;font-weight:500;white-space:nowrap}
+.kbd{border:1px solid rgba(255,255,255,.2);border-radius:4px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+/* modal */
+#modal{left:448px;top:196px;width:1024px;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 12px 40px rgba(0,0,0,.06);overflow:hidden}
+.mhead{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--n100)}
+.crumb{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--n500)}
+.crumb b{color:var(--n800);font-weight:600}
+.fold{width:22px;height:22px;border-radius:6px;background:var(--n100);border:1px solid var(--n200)}
+.xbtn{width:28px;height:28px;border-radius:6px;position:relative}
+.xbtn:before,.xbtn:after{content:"";position:absolute;left:7px;top:13px;width:14px;height:1.6px;background:var(--n500);transform:rotate(45deg)}
+.xbtn:after{transform:rotate(-45deg)}
+.mgrid{display:grid;grid-template-columns:2fr 1fr;column-gap:0}
+.mleft{padding:16px 24px;display:flex;flex-direction:column;gap:22px}
+.fieldin{margin-top:8px}
+.split{display:flex;margin-top:8px}
+.dom{height:38px;border:1px solid var(--n300);border-right:0;border-radius:6px 0 0 6px;background:var(--n50);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:14px;color:var(--n600);white-space:nowrap}
+.split .inp{border-radius:0 6px 6px 0;flex:1}
+.ta{height:64px;align-items:flex-start;padding-top:9px}
+.chev{width:7px;height:7px;border-right:1.5px solid var(--n400);border-bottom:1.5px solid var(--n400);transform:rotate(45deg) translate(-2px,-2px)}
+.ctrow{display:flex;align-items:center;justify-content:space-between;height:24px}
+.swtrack{width:32px;height:16px;border-radius:8px;background:var(--n200);position:relative}
+.swtrack:after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.mright{padding:16px 16px 16px 0}
+.rpanel{border:1px solid var(--n200);border-radius:12px;background:var(--n50);padding:12px 16px;display:flex;flex-direction:column;gap:12px;height:100%}
+.qrbox{height:150px;border:1px solid var(--n200);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.ogbox{height:140px;border:1px solid var(--n200);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--n400);font-size:13px}
+.mfoot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--n100);background:var(--n50);padding:14px 16px}
+.feat{display:flex;gap:8px}
+.feat span{height:32px;padding:0 10px;border:1px solid var(--n200);border-radius:8px;background:#fff;font-size:13px;color:var(--n700);display:flex;align-items:center}
+/* links page */
+#lpage{left:400px;top:170px;width:1120px}
+.lhead{display:flex;justify-content:space-between;align-items:center;height:40px}
+.lhead h1{margin:0;font-size:24px;font-weight:600;letter-spacing:-.01em}
+.ltool{display:flex;gap:8px;margin-top:22px;height:36px}
+.tbtn{height:36px;border:1px solid var(--n200);border-radius:8px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--n800);background:#fff}
+.search{flex:0 0 340px;margin-left:auto;height:36px;border:1px solid var(--n200);border-radius:8px;padding:0 14px;display:flex;align-items:center;font-size:14px;color:var(--n400)}
+.lcard{position:absolute;left:0;width:1120px;height:68px;border:1px solid var(--n200);border-radius:12px;background:#fff;overflow:hidden}
+.lcin{position:absolute;left:0;top:0;width:100%;height:66px;display:flex;align-items:center;padding:0 16px;gap:14px}
+.av{width:34px;height:34px;border-radius:50%;border:1px solid var(--n200);background:linear-gradient(#fff,#fff);display:flex;align-items:center;justify-content:center;flex:none}
+.av i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--n400)}
+.ltxt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.lt1{font-size:15px;font-weight:600;color:var(--n950);line-height:20px}
+.lt2{font-size:13.5px;color:var(--n500);line-height:18px;display:flex;align-items:center;gap:6px}
+.arr{width:10px;height:7px;border-left:1.5px solid var(--n400);border-bottom:1.5px solid var(--n400);border-radius:0 0 0 3px;margin-top:-4px}
+.badge{margin-left:auto;height:28px;border:1px solid var(--n200);background:var(--n50);border-radius:6px;padding:0 9px;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--n800);white-space:nowrap;overflow:hidden}
+.dots{width:28px;height:28px;display:flex;align-items:center;justify-content:center;gap:3px;flex-direction:column}
+.dots i{width:3px;height:3px;border-radius:50%;background:var(--n500)}
+/* analytics */
+#apage{left:420px;top:150px;width:1080px}
+.abar{display:flex;gap:8px;height:36px}
+.chip{height:36px;border:1px solid var(--n200);border-radius:8px;padding:0 12px;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--n800);background:#fff;white-space:nowrap}
+.chip b{font-weight:600}
+#acard{position:relative;margin-top:16px;width:1080px;height:600px;border:1px solid var(--n200);border-radius:12px;overflow:hidden;background:#fff}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--n200);height:124px;position:relative}
+.tab{position:relative;padding:24px 32px;border-left:1px solid var(--n200);overflow:hidden}
+.tab{z-index:0}
+.tab:first-child{border-left:0}
+.tl{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--n600)}
+.sw{width:8px;height:8px;border-radius:2px;background:var(--n300)}
+.tv{margin-top:6px;height:48px;display:flex;align-items:center;font-size:30px;font-weight:500;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.cv{position:absolute;left:0;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:1px solid var(--n200);background:#fff;z-index:2}
+.cv:after{content:"";position:absolute;left:7px;top:9px;width:5px;height:5px;border-right:2px solid var(--n400);border-top:2px solid var(--n400);transform:rotate(45deg)}
+.ul{position:absolute;left:0;bottom:0;height:3px;width:100%;background:#000}
+#chart{position:absolute;left:0;top:124px}
+.tip{position:absolute;background:#fff;border:1px solid var(--n200);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.08);padding:10px 12px;font-size:13px;white-space:nowrap;overflow:hidden}
+.tip .d{color:var(--n500)}
+.tip .r{display:flex;gap:24px;justify-content:space-between;margin-top:6px;color:var(--n800)}
+/* end */
+#endc{position:absolute;inset:0}
+#tag{position:absolute;left:0;width:1920px;top:640px;text-align:center;font-size:60px;font-weight:600;letter-spacing:-.03em}
+#cta{position:absolute;top:760px;height:72px;border-radius:36px;background:#000;color:#fff;font-size:28px;font-weight:600;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
+#cta span{display:inline-block}
+/* dot & cursor */
+#dot{position:absolute;left:0;top:0;background:var(--blue);transform-origin:0 0}
+#thumb{position:absolute;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+#mark{position:absolute;left:0;top:0;overflow:visible}
+#cursor{position:absolute;left:0;top:0;width:40px;height:40px;transform-origin:4px 3px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="mb" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur id="mbg" stdDeviation="0 0"/></filter>
+  <filter id="db" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur id="dbg" stdDeviation="0 0"/></filter>
+</svg>
+<div id="stage">
+ <div id="camwrap">
+  <div id="world">
+
+   <!-- HOOK -->
+   <div id="sHook" class="scene">
+    <div id="hook">
+      <div class="line"><span class="m"><span class="mi hw">Which</span></span><span class="gap"></span><span class="m"><span class="mi hw">link</span></span></div>
+      <div class="line"><span class="m"><span class="mi hw">made</span></span><span class="gap"></span><span class="m"><span class="mi hw">the</span></span><span class="gap"></span><span class="m"><span class="mi hw blue">sale</span></span><span class="m" id="qm"><span class="mi hw" id="q">?</span><span id="qbl" style="display:inline-block;width:0;height:0;vertical-align:baseline"></span></span></div>
+    </div>
+   </div>
+
+   <!-- LINK BUILDER MODAL -->
+   <div id="sModal" class="scene"><div class="bg"></div>
+    <div id="modal" class="card">
+      <div class="mhead"><div class="crumb"><span class="fold"></span><b>Links</b><span style="color:var(--n300)">/</span><span>New link</span></div><div class="xbtn"></div></div>
+      <div class="mgrid">
+        <div class="mleft">
+          <div><div class="lbl">Destination URL <i class="info"></i></div>
+               <div class="inp fieldin" id="inUrl"><span class="val" id="urlVal"></span><span class="caret" id="urlCaret"></span><span class="ph" id="urlPh">https://dub.co/help/article/dub-links</span></div></div>
+          <div><div class="lbl">Short Link</div>
+               <div class="split"><div class="dom">dub.sh <span class="chev"></span></div><div class="inp" id="inKey"><span class="val" id="keyVal"></span><span class="caret" id="keyCaret"></span><span class="ph" id="keyPh">(optional)</span></div></div></div>
+          <div><div class="lbl">Tags</div><div class="inp fieldin" style="justify-content:space-between"><span class="ph">Select tags...</span><span class="chev"></span></div></div>
+          <div><div class="lbl">Comments</div><div class="inp fieldin ta"><span class="ph">Add comments</span></div></div>
+          <div class="ctrow"><div class="lbl">Conversion Tracking <i class="info"></i></div><div class="swtrack" id="sw"></div></div>
+        </div>
+        <div class="mright"><div class="rpanel">
+          <div class="lbl">QR Code</div>
+          <div class="qrbox"><svg id="qr" width="118" height="118" viewBox="0 0 25 25"></svg></div>
+          <div class="lbl">Custom Link Preview</div>
+          <div class="ogbox">Enter a link to generate a preview</div>
+        </div></div>
+      </div>
+      <div class="mfoot"><div class="feat"><span>UTM</span><span>Targeting</span><span>A/B Test</span><span>Password</span><span>Expiration</span></div>
+        <div class="btn" id="createBtn">Create link <span class="kbd">&#8629;</span></div></div>
+    </div>
+   </div>
+
+   <!-- LINKS LIST -->
+   <div id="sLinks" class="scene"><div class="bg"></div>
+    <div id="lpage" class="abs">
+      <div class="lhead"><h1>Links</h1><div class="btn" style="padding-right:6px">Create link <span class="kbd">C</span></div></div>
+      <div class="ltool"><div class="tbtn">Filter</div><div class="tbtn">Display</div><div class="search">Search by short link or URL</div></div>
+      <div id="lcards" class="abs" style="left:0;top:122px;width:1120px;height:400px">
+        <div class="lcard" id="newCard"><div class="lcin" id="newIn">
+          <div class="av" id="newAv" style="border-color:transparent;background:none"></div>
+          <div class="ltxt"><div class="lt1"><span class="m"><span class="mi" id="nt1">dub.sh/launch</span></span></div>
+            <div class="lt2"><span class="m"><span class="mi" id="nt2"><span style="display:inline-flex;align-items:center;gap:6px"><span class="arr"></span>acme.com/pricing <span style="color:var(--n300)">·</span> now</span></span></span></div></div>
+          <div class="badge" id="nbadge"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#525252" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.095,7.778l7.314,2.51c.222,.076,.226,.388,.007,.47l-3.279,1.233c-.067,.025-.121,.079-.146,.146l-1.233,3.279c-.083,.219-.394,.215-.47-.007l-2.51-7.314c-.068-.197,.121-.385,.318-.318Z"/><line x1="12.031" x2="16.243" y1="12.031" y2="16.243"/><line x1="7.75" x2="7.75" y1="1.75" y2="3.75"/><line x1="11.993" x2="10.578" y1="3.507" y2="4.922"/><line x1="3.507" x2="4.922" y1="3.507" y2="4.922"/><line x1="1.75" x2="3.75" y1="7.75" y2="7.75"/></svg><span id="nclicks">0</span><span>clicks</span></div>
+          <div class="dots"><i></i><i></i><i></i></div>
+        </div></div>
+        <div class="lcard" id="oc1"><div class="lcin"><div class="av"><i></i></div><div class="ltxt"><div class="lt1">dub.sh/docs</div><div class="lt2"><span class="arr"></span>acme.com/docs <span style="color:var(--n300)">·</span> 3d</div></div><div class="badge"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#525252" stroke-width="1.5" stroke-linecap="round"><path d="M8.095,7.778l7.314,2.51c.222,.076,.226,.388,.007,.47l-3.279,1.233c-.067,.025-.121,.079-.146,.146l-1.233,3.279c-.083,.219-.394,.215-.47-.007l-2.51-7.314c-.068-.197,.121-.385,.318-.318Z"/></svg>1.4K clicks</div><div class="dots"><i></i><i></i><i></i></div></div></div>
+        <div class="lcard" id="oc2"><div class="lcin"><div class="av"><i></i></div><div class="ltxt"><div class="lt1">dub.sh/changelog</div><div class="lt2"><span class="arr"></span>acme.com/changelog <span style="color:var(--n300)">·</span> 1w</div></div><div class="badge"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#525252" stroke-width="1.5" stroke-linecap="round"><path d="M8.095,7.778l7.314,2.51c.222,.076,.226,.388,.007,.47l-3.279,1.233c-.067,.025-.121,.079-.146,.146l-1.233,3.279c-.083,.219-.394,.215-.47-.007l-2.51-7.314c-.068-.197,.121-.385,.318-.318Z"/></svg>826 clicks</div><div class="dots"><i></i><i></i><i></i></div></div></div>
+        <div class="lcard" id="oc3"><div class="lcin"><div class="av"><i></i></div><div class="ltxt"><div class="lt1">dub.sh/careers</div><div class="lt2"><span class="arr"></span>acme.com/careers <span style="color:var(--n300)">·</span> 2w</div></div><div class="badge"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#525252" stroke-width="1.5" stroke-linecap="round"><path d="M8.095,7.778l7.314,2.51c.222,.076,.226,.388,.007,.47l-3.279,1.233c-.067,.025-.121,.079-.146,.146l-1.233,3.279c-.083,.219-.394,.215-.47-.007l-2.51-7.314c-.068-.197,.121-.385,.318-.318Z"/></svg>312 clicks</div><div class="dots"><i></i><i></i><i></i></div></div></div>
+      </div>
+    </div>
+   </div>
+
+   <!-- ANALYTICS -->
+   <div id="sAn" class="scene"><div class="bg"></div>
+    <div id="apage" class="abs">
+      <div class="abar"><div class="chip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#525252" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Link <span style="color:var(--n400)">is</span> <b>dub.sh/launch</b></div><div class="chip">Last 30 days</div></div>
+      <div id="acard">
+        <div class="tabs"><span class="cv" style="left:33.333%"></span><span class="cv" style="left:66.667%"></span>
+          <div class="tab" id="tabC"><div class="tl"><span class="sw"></span>Clicks</div><div class="tv" id="vC">0</div><div class="ul" id="ulC"></div></div>
+          <div class="tab" id="tabL"><div class="tl"><span class="sw"></span>Leads</div><div class="tv" id="vL">0</div></div>
+          <div class="tab" id="tabS"><div class="tl"><span class="sw"></span>Sales</div><div class="tv" id="vS">$0</div></div>
+        </div>
+        <svg id="chart" width="1080" height="476">
+          <g id="grid"></g>
+          <path id="area" fill="#f5f5f5"/>
+          <path id="line" fill="none" stroke="#171717" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <line id="scrub" x1="0" x2="0" y1="20" y2="420" stroke="#d4d4d4" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <g id="xlab"></g>
+        </svg>
+        <div class="tip" id="tip"><div class="d" id="tipD">Oct 21, 2026</div><div class="r"><span>Clicks</span><b id="tipV">0</b></div></div>
+      </div>
+    </div>
+   </div>
+
+   <!-- END CARD -->
+   <div id="sEnd" class="scene">
+     <svg id="wm" class="abs" viewBox="0 0 46 24" width="368" height="192" style="overflow:visible"><path fill-rule="evenodd" clip-rule="evenodd" fill="#000" d="M11 2H14V13.9332L14.0003 13.9731L14.0003 14C14.0003 14.0223 14.0002 14.0445 14 14.0668V21H11V19.7455C9.86619 20.5362 8.48733 21 7.00016 21C3.13408 21 0 17.866 0 14C0 10.134 3.13408 7 7.00016 7C8.48733 7 9.86619 7.46375 11 8.25452V2ZM7 17.9998C9.20914 17.9998 11 16.209 11 13.9999C11 11.7908 9.20914 10 7 10C4.79086 10 3 11.7908 3 13.9999C3 16.209 4.79086 17.9998 7 17.9998ZM32 2H35V8.25474C36.1339 7.46383 37.5128 7 39.0002 7C42.8662 7 46.0003 10.134 46.0003 14C46.0003 17.866 42.8662 21 39.0002 21C35.1341 21 32 17.866 32 14V2ZM39 17.9998C41.2091 17.9998 43 16.209 43 13.9999C43 11.7908 41.2091 10 39 10C36.7909 10 35 11.7908 35 13.9999C35 16.209 36.7909 17.9998 39 17.9998ZM19 7H16V14C16 14.9192 16.1811 15.8295 16.5329 16.6788C16.8846 17.5281 17.4003 18.2997 18.0503 18.9497C18.7003 19.5997 19.472 20.1154 20.3213 20.4671C21.1706 20.8189 22.0809 21 23.0002 21C23.9194 21 24.8297 20.8189 25.679 20.4671C26.5283 20.1154 27.3 19.5997 27.95 18.9497C28.6 18.2997 29.1157 17.5281 29.4675 16.6788C29.8192 15.8295 30.0003 14.9192 30.0003 14H30V7H27V14C27 15.0608 26.5785 16.0782 25.8284 16.8283C25.0783 17.5784 24.0609 17.9998 23 17.9998C21.9391 17.9998 20.9217 17.5784 20.1716 16.8283C19.4215 16.0782 19 15.0608 19 14V7Z"/></svg>
+     <div id="tag"><span class="m"><span class="mi" id="tagi">The link attribution platform.</span></span></div>
+     <div id="cta"><span id="ctai">Start for free at dub.co</span></div>
+   </div>
+
+   <!-- THROUGH-LINE OBJECT -->
+   <div id="dot"><div id="thumb"></div></div>
+   <svg id="mark" viewBox="0 0 64 64">
+     <defs><mask id="mmask" maskUnits="userSpaceOnUse" x="-1" y="-1" width="66" height="66">
+       <circle cx="32" cy="32" r="32" fill="#fff"/>
+       <circle id="mhole" cx="32" cy="32" r="0" fill="#000"/>
+       <rect id="mslot" x="40" y="-1" width="8" height="0" fill="#000"/>
+     </mask></defs>
+     <circle id="mdisc" cx="32" cy="32" r="32" mask="url(#mmask)" fill="#3b82f6"/>
+   </svg>
+  </div>
+ </div>
+ <!-- cursor lives in screen space -->
+ <svg id="cursor" viewBox="0 0 40 40"><path d="M5 3 L5 31 L12.2 24.6 L17 35.4 L22 33.2 L17.4 22.6 L27 22.4 Z" fill="#000" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>
+</div>
+
+<script>
+'use strict';
+const W=1920,H=1080,DUR=15;
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,u)=>a+(b-a)*u;
+const inv=(a,b,x)=>clamp((x-a)/(b-a));
+// damped spring step response, ~2% overshoot max
+function spring(dt,w=24,z=0.78){ if(dt<=0) return 0; const wd=w*Math.sqrt(1-z*z); return 1-Math.exp(-z*w*dt)*(Math.cos(wd*dt)+z*w/wd*Math.sin(wd*dt)); }
+// critically damped (no overshoot) for camera/cursor glides
+function crit(dt,w=13){ if(dt<=0) return 0; return 1-Math.exp(-w*dt)*(1+w*dt); }
+function expoOut(u){ u=clamp(u); return u>=1?1:(1-Math.pow(2,-10*u))/(1-Math.pow(2,-10)); }
+function expoInOut(u){ u=clamp(u); if(u<=0)return 0; if(u>=1)return 1; return u<.5?Math.pow(2,20*u-10)/2:(2-Math.pow(2,-20*u+10))/2; }
+const S=(t,t0,w,z)=>spring(t-t0,w,z);
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+
+// ---------- data (illustrative demo workspace) ----------
+function series(n,total,shape){ const raw=[]; for(let i=0;i<n;i++) raw.push(Math.max(0.05,shape(i/(n-1),i))); const s=raw.reduce((a,b)=>a+b,0); let v=raw.map(r=>r/s*total); let iv=v.map(Math.floor); let rem=total-iv.reduce((a,b)=>a+b,0); const fr=v.map((x,i)=>[x-iv[i],i]).sort((a,b)=>b[0]-a[0]); for(let k=0;k<rem;k++) iv[fr[k][1]]++; return iv; }
+const N=30;
+const wob=(i,a,b)=>0.5+0.5*Math.sin(i*a+b);
+const SHAPE={
+  clicks:(u,i)=>0.22+Math.pow(u,1.5)+0.10*Math.sin(i*0.9+0.3)+0.06*Math.sin(i*2.3+1.2),
+  leads:(u,i)=>0.10+Math.pow(u,1.8)+0.09*Math.sin(i*0.7+1.0)+0.05*Math.sin(i*1.9),
+  sales:(u,i)=>0.05+Math.pow(u,2.2)+0.10*Math.sin(i*0.6+2.0)+0.05*Math.sin(i*1.7+0.4),
+};
+const SER={clicks:series(N,248,SHAPE.clicks),leads:series(N,31,SHAPE.leads),sales:series(N,1240,SHAPE.sales)};
+const DATES=[]; { const end=new Date(Date.UTC(2026,10,3)); for(let i=0;i<N;i++){ const d=new Date(end.getTime()-(N-1-i)*864e5); DATES.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'})); } }
+
+// chart geometry (chart-local coords)
+const CX0=64,CX1=1040,CY0=40,CY1=400;
+function chartPts(name){ const s=[...Array(N)].map((_,i)=>Math.max(0.03,SHAPE[name](i/(N-1),i))); const mx=Math.max(...s)*1.12; return s.map((v,i)=>[lerp(CX0,CX1,i/(N-1)), lerp(CY1,CY0,v/mx)]); }
+const PTS={clicks:chartPts('clicks'),leads:chartPts('leads'),sales:chartPts('sales')};
+function catmull(P,steps=12){ const out=[]; for(let i=0;i<P.length-1;i++){ const p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(P.length-1,i+2)]; for(let s=0;s<steps;s++){ const u=s/steps,u2=u*u,u3=u2*u; const f=(a,b,c,d)=>0.5*((2*b)+(-a+c)*u+(2*a-5*b+4*c-d)*u2+(-a+3*b-3*c+d)*u3); out.push([f(p0[0],p1[0],p2[0],p3[0]),Math.min(CY1,f(p0[1],p1[1],p2[1],p3[1]))]); } } out.push(P[P.length-1]); return out; }
+
+// QR-like module pattern (decorative, seeded)
+(function buildQR(){ let s=7; const rnd=()=>(s=(s*16807)%2147483647)/2147483647; let h=''; const fin=(x,y)=>{h+=`<path d="M${x} ${y}h7v7h-7z M${x+1} ${y+1}v5h5v-5z" fill-rule="evenodd" fill="#000"/><rect x="${x+2}" y="${y+2}" width="3" height="3" fill="#000"/>`;};
+  fin(0,0);fin(18,0);fin(0,18);
+  for(let y=0;y<25;y++)for(let x=0;x<25;x++){ if((x<8&&y<8)||(x>16&&y<8)||(x<8&&y>16)) continue; if(rnd()<0.47) h+=`<rect class="qm" data-x="${x}" data-y="${y}" x="${x}" y="${y}" width="1" height="1" fill="#000"/>`; }
+  $('qr').innerHTML=`<g id="qrg">${h}</g>`; })();
+
+// ---------- measurement (static layout, measured once at load) ----------
+const A={};
+function rectOf(el){ const r=el.getBoundingClientRect(); return {x:r.left,y:r.top,w:r.width,h:r.height,cx:r.left+r.width/2,cy:r.top+r.height/2,r:r.right,b:r.bottom}; }
+const CARD_GAP=10, CARD_H=68;
+function measure(){
+  // layout cards at final positions
+  ['newCard','oc1','oc2','oc3'].forEach((id,i)=>{ $(id).style.top=(i*(CARD_H+CARD_GAP))+'px'; });
+  $('world').style.transform='none';
+  A.qm=rectOf($('qm')); A.qbl=rectOf($('qbl'));
+  A.hook=rectOf($('hook'));
+  A.sw=rectOf($('sw')); A.modal=rectOf($('modal'));
+  A.url=rectOf($('inUrl')); A.key=rectOf($('inKey')); A.create=rectOf($('createBtn'));
+  A.mleft=rectOf(document.querySelector('.mleft'));
+  A.newCard=rectOf($('newCard')); A.newAv=rectOf($('newAv')); A.badge=rectOf($('nbadge'));
+  A.lpage=rectOf($('lpage'));
+  A.acard=rectOf($('acard')); A.apage=rectOf($('apage'));
+  A.tabC=rectOf($('tabC')); A.tabL=rectOf($('tabL')); A.tabS=rectOf($('tabS')); A.vS=rectOf($('vS'));
+  A.chart=rectOf($('chart'));
+  // "?" dot: find the glyph's dot via canvas raster
+  const fs=parseFloat(getComputedStyle($('q')).fontSize);
+  const c=document.createElement('canvas'); c.width=400; c.height=400; const g=c.getContext('2d');
+  g.font=`700 ${fs}px Satoshi`; g.fillStyle='#000'; g.textBaseline='alphabetic'; g.fillText('?',100,300);
+  const d=g.getImageData(0,0,400,400).data; const ink=(x,y)=>d[(y*400+x)*4+3]>100;
+  let yb=-1; for(let y=399;y>=0&&yb<0;y--) for(let x=0;x<400;x++) if(ink(x,y)){yb=y;break;}
+  let yt=yb; while(yt>0){ let any=false; for(let x=0;x<400;x++) if(ink(x,yt-1)){any=true;break;} if(!any)break; yt--; }
+  let xl=400,xr=0; for(let y=yt;y<=yb;y++) for(let x=0;x<400;x++) if(ink(x,y)){xl=Math.min(xl,x);xr=Math.max(xr,x);}
+  const qr=rectOf($('q'));
+  A.qdot={x:qr.x+((xl+xr+1)/2-100), y:A.qbl.y+((yt+yb+1)/2-300), r:Math.max(xr-xl+1,yb-yt+1)/2};
+  // hide the glyph's own dot (the through-line object replaces it)
+  const cutFromTop=(A.qbl.y+(yt-300)-3)-qr.y;
+  $('q').style.clipPath=`inset(0 0 ${Math.max(0,qr.h-cutFromTop)}px 0)`;
+  // wordmark / end layout
+  A.endY=470; A.markR=100; A.wmK=8;
+  const lockW=2*A.markR+48+46*A.wmK; A.markX=W/2-lockW/2+A.markR; A.wmX=A.markX+A.markR+48;
+}
+
+// ---------- timeline ----------
+const T={hookW:[0.0,0.12,0.5,0.62,1.0], qStem:1.0, dotIn:1.5, click1:2.0,
+  modalIn:2.02, urlType:[2.45,3.0], keyType:[3.0,3.35], qrIn:3.4, swClick:4.0, createClick:5.0,
+  modalOut:5.2, linksIn:5.72, cardUnfold:6.0, cardText:6.5, count:[7.0,7.5], badgeClick:7.55,
+  anIn:7.75, pen:[8.0,9.0], drag:[9.08,9.78], leadsClick:10.0, salesClick:11.0, big:12.0,
+  collapse:12.5, logo:13.0, wm:13.5, tag:14.0, cta:14.5};
+const DATA_URL='acme.com/pricing', KEY='launch';
+
+// camera shots: center + zoom, push x1.04 across each shot, start from previous end state
+let SHOTS=[];
+function buildShots(){
+  const fit=(r,pad=1.15)=>Math.min(W/(r.w*pad),H/(r.h*pad));
+  const m=A.modal, ml=A.mleft;
+  SHOTS=[
+    {t:0, x:W/2, y:H/2, z:1.0},
+    {t:2.0, x:ml.x+ml.w*0.5, y:(A.url.y+A.key.b)/2+6, z:2.15, w:9},
+    {t:3.55, x:ml.x+ml.w*0.5, y:A.sw.cy-40, z:2.3, w:12},
+    {t:4.45, x:(A.create.cx+m.x+m.w*0.5)/2+60, y:A.create.cy-30, z:2.0, w:12},
+    {t:5.6, x:A.newCard.cx, y:A.newCard.cy+70, z:1.55, w:9},
+    {t:6.9, x:A.badge.cx-300, y:A.newCard.cy+10, z:2.0, w:11},
+    {t:7.75, x:A.acard.cx, y:A.acard.cy-30, z:1.45, w:9},
+    {t:9.0, x:A.chart.x+A.chart.w*0.62, y:A.chart.y+230, z:1.75, w:10},
+    {t:9.85, x:A.tabL.cx, y:A.tabL.cy+70, z:1.75, w:11},
+    {t:10.95, x:A.tabS.cx-40, y:A.tabS.cy+40, z:2.2, w:11},
+    {t:11.68, x:A.tabS.cx-10, y:A.tabS.cy+6, z:3.1, w:17},
+    {t:12.55, x:W/2, y:H/2+20, z:1.0, w:10},
+  ];
+}
+function nominal(i,t){ const s=SHOTS[i]; const e=(i+1<SHOTS.length)?SHOTS[i+1].t:DUR; const p=clamp((t-s.t)/(e-s.t)); return {x:s.x,y:s.y,z:s.z*(1+0.04*p)}; }
+function mixState(a,b,u){ return {x:lerp(a.x,b.x,u),y:lerp(a.y,b.y,u),z:Math.exp(lerp(Math.log(a.z),Math.log(b.z),u))}; }
+function cam(t){
+  let start=nominal(0,0), state=start;
+  for(let i=0;i<SHOTS.length;i++){
+    const s=SHOTS[i]; const tEnd=(i+1<SHOTS.length)?SHOTS[i+1].t:DUR; const tt=Math.min(t,tEnd);
+    const u=i===0?1:crit(tt-s.t,s.w||12);
+    state=mixState(start,nominal(i,tt),u);
+    if(t<tEnd) return state;
+    start=state;
+  }
+  return state;
+}
+const toScreen=(c,p)=>[W/2+(p[0]-c.x)*c.z, H/2+(p[1]-c.y)*c.z];
+
+// cursor path in world coords: [time, x, y]  (moves between keys with expo in-out over the gap)
+let CUR=[];
+function buildCursor(){
+  const q=A.qdot;
+  CUR=[
+    [1.05, q.x+520, q.y+360],
+    [1.92, q.x+6, q.y+4],
+    [2.08, q.x+6, q.y+4],
+    [2.55, A.url.x+260, A.url.b+46],
+    [3.0, A.url.x+260, A.url.b+46],
+    [3.3, A.key.x+200, A.key.b+40],
+    [3.6, A.key.x+200, A.key.b+40],
+    [3.96, A.sw.cx-2, A.sw.cy+1],
+    [4.4, A.sw.cx-2, A.sw.cy+1],
+    [4.96, A.create.cx-14, A.create.cy+2],
+    [5.25, A.create.cx-14, A.create.cy+2],
+    [5.9, A.newCard.cx+120, A.newCard.b+150],
+    [6.6, A.newCard.cx+80, A.newCard.b+110],
+    [7.48, A.badge.cx-6, A.badge.cy+2],
+    [7.7, A.badge.cx-6, A.badge.cy+2],
+    [8.3, A.chart.x+900, A.chart.y+430],
+    [9.02, null, null], // grab the dot at line end (filled in path fn)
+    [9.78, null, null], // drag end
+    [9.99, A.tabL.cx-40, A.tabL.cy+8],
+    [10.55, A.tabL.cx-40, A.tabL.cy+8],
+    [10.98, A.tabS.cx-90, A.tabS.cy+8],
+    [11.35, A.tabS.cx-90, A.tabS.cy+8],
+    [12.3, A.tabS.cx+260, A.tabS.cy+520],
+  ];
+  const pEnd=PTS.clicks[N-1]; CUR[16][1]=A.chart.x+pEnd[0]+2; CUR[16][2]=A.chart.y+pEnd[1]+3;
+  const dx=dragX(T.drag[1]); CUR[17][1]=A.chart.x+dx[0]+2; CUR[17][2]=A.chart.y+dx[1]+3;
+}
+const CLICKS=[2.0,4.0,5.0,7.55,10.0,11.0];
+function cursorPos(t){
+  if(t>=T.drag[0]&&t<=T.drag[1]){ const p=dragX(t); return [A.chart.x+p[0]+2, A.chart.y+p[1]+3]; }
+  if(t<=CUR[0][0]) return [CUR[0][1],CUR[0][2]];
+  for(let i=0;i<CUR.length-1;i++){ const a=CUR[i],b=CUR[i+1]; if(t<=b[0]){ const u=expoInOut((t-a[0])/(b[0]-a[0])*0.92+0.0); const e=u; // arc a little
+      const mx=lerp(a[1],b[1],e), my=lerp(a[2],b[2],e); const arc=Math.sin(Math.PI*e)*Math.hypot(b[1]-a[1],b[2]-a[2])*0.06; return [mx+arc*0.3, my-arc]; } }
+  const l=CUR[CUR.length-1]; return [l[1],l[2]];
+}
+// drag scrub along the clicks line (chart-local)
+const CURVE={}; for(const k in PTS) CURVE[k]=catmull(PTS[k]);
+function curveAt(name,f){ const c=CURVE[name]; const x=lerp(CX0,CX1,clamp(f)); let i=0; while(i<c.length-2&&c[i+1][0]<x) i++; const a=c[i],b=c[i+1]; const u=clamp((x-a[0])/((b[0]-a[0])||1)); return [x,lerp(a[1],b[1],u)]; }
+function dragF(t){ return lerp(1,0.52,expoInOut(inv(T.drag[0],T.drag[1],t))); }
+function dragX(t){ return curveAt('clicks',dragF(t)); }
+
+T.linksIn=5.58;
+// ---------- through-line object (the blue click) ----------
+// world-space box {cx,cy,w,h}; thumb = white switch thumb progress
+function dotState(t){
+  const q=A.qdot, sx=A.sw.x, sy=A.sw.cy;
+  const av={cx:A.newAv.cx, cy:A.newAv.cy};
+  const c0=PTS.clicks[0], p0={cx:A.chart.x+c0[0], cy:A.chart.y+c0[1]};
+  const ulL={cx:A.tabL.cx, cy:A.tabL.b-1.5, w:A.tabL.w}, ulS={cx:A.tabS.cx, cy:A.tabS.b-1.5, w:A.tabS.w};
+  if(t<T.click1){ const s=S(t,T.dotIn,26,0.8); const press=1-0.16*Math.sin(Math.PI*inv(1.9,2.08,t)); const d=2*q.r*s*press; return {cx:q.x,cy:q.y,w:d,h:d}; }
+  if(t<T.swClick){ const u=expoInOut(inv(2.0,2.42,t)); const d=lerp(2*q.r*0.9,16,u);
+    return {cx:lerp(q.x,sx+8,u), cy:lerp(q.y,sy,u)-Math.sin(Math.PI*u)*140, w:d,h:d}; }
+  if(t<5.2){ const s=S(t,T.swClick,26,0.8); const w=lerp(16,32,s); return {cx:sx+w/2,cy:sy,w,h:16,thumb:s}; }
+  if(t<5.45){ const c=expoInOut(inv(5.2,5.42,t)); const w=lerp(32,16,c); return {cx:sx+32-w/2,cy:sy,w,h:16,thumb:1-c}; }
+  if(t<7.6){ const u=expoInOut(inv(5.45,5.98,t)); const d=lerp(16,34,u);
+    return {cx:lerp(sx+24,av.cx,u), cy:lerp(sy,av.cy,u)-Math.sin(Math.PI*u)*90, w:d,h:d}; }
+  if(t<T.pen[0]){ const u=expoInOut(inv(7.6,7.98,t)); const d=lerp(34,14,u);
+    return {cx:lerp(av.cx,p0.cx,u), cy:lerp(av.cy,p0.cy,u)-Math.sin(Math.PI*u)*120, w:d,h:d}; }
+  if(t<T.leadsClick){ const p=curveAt('clicks', t<T.drag[0]?penF(t):dragF(t)); return {cx:A.chart.x+p[0],cy:A.chart.y+p[1],w:14,h:14}; }
+  if(t<T.salesClick){ const from=curveAt('clicks',dragF(T.drag[1])); const fx=A.chart.x+from[0], fy=A.chart.y+from[1];
+    const u=expoInOut(inv(10.0,10.28,t)); const m=S(t,10.18,24,0.8);
+    return {cx:lerp(fx,ulL.cx,u), cy:lerp(fy,ulL.cy,u)-Math.sin(Math.PI*u)*80, w:lerp(14,ulL.w,m), h:lerp(14,3,m)}; }
+  if(t<T.collapse){ const s=S(t,T.salesClick,22,0.8); return {cx:lerp(ulL.cx,ulS.cx,s),cy:ulS.cy,w:ulS.w,h:3}; }
+  const c=expoInOut(inv(12.5,12.66,t)); return {cx:ulS.cx,cy:ulS.cy-c*5,w:lerp(ulS.w,14,c),h:lerp(3,14,c)};
+}
+function penF(t){ const u=inv(T.pen[0],T.pen[1],t); return u<0.5?2*u*u:1-Math.pow(-2*u+2,2)/2; }
+// mark (the dot after it leaves the UI) : center + radius in world
+function markState(t){
+  const st=dotState(12.66); const sx=st.cx, sy=st.cy;
+  const u=expoInOut(inv(12.62,13.02,t));
+  let x=lerp(sx,W/2,u), y=lerp(sy,A.endY,u)-Math.sin(Math.PI*u)*60;
+  const R=lerp(7,A.markR,u);
+  x=lerp(x,A.markX,S(t,T.wm,18,0.82));
+  return {x,y,R};
+}
+
+// ---------- per-scene renderers ----------
+const hw=[...document.querySelectorAll('#hook .hw')];
+function rise(el,t0,t1,{dist=105,unit='%'}={}){ // in via mask, out downward via mask
+  const sIn=S(0,0); const a=spring(T_now-t0,22,0.85); const b=t1==null?0:expoInOut(inv(t1,t1+0.2,T_now));
+  el.style.transform=`translateY(${((1-a)*dist + b*dist).toFixed(2)}${unit})`;
+}
+let T_now=0;
+function vis(id,on){ $(id).style.display=on?'':'none'; }
+function maxCorner(cx,cy){ return Math.hypot(Math.max(cx,W-cx)+700,Math.max(cy,H-cy)+700); }
+
+function hook(t){
+  const on=t<2.4; vis('sHook',on); if(!on) return;
+  const starts=[0.0,0.12,0.5,0.62,1.0,1.08];
+  hw.forEach((el,i)=>rise(el,starts[i],2.0+i*0.025));
+}
+function typed(str,a,b,t){ return str.slice(0,Math.floor(inv(a,b,t)*str.length+1e-6)); }
+function caretOn(t,a,b,typing){ if(t<a||t>=b) return false; if(typing) return true; return ((t-a)%0.5)<0.32; }
+function modal(t){
+  const on=t>=T.modalIn&&t<5.5; vis('sModal',on); if(!on) return;
+  const cx=A.sw.x+8, cy=A.sw.cy;
+  let R; if(t<5.2) R=maxCorner(cx,cy)*expoOut(inv(T.modalIn,2.6,t)); else { const c=expoInOut(inv(5.2,5.45,t)); R=lerp(maxCorner(cx,cy),0,c); }
+  const ccx=t<5.2?cx:A.sw.x+24;
+  $('sModal').style.clipPath=R>=maxCorner(cx,cy)-1?'none':`circle(${Math.max(0,R).toFixed(1)}px at ${ccx}px ${cy}px)`;
+  const u=typed(DATA_URL,T.urlType[0],T.urlType[1],t), k=typed(KEY,T.keyType[0],T.keyType[1],t);
+  $('urlVal').textContent=u; $('urlPh').style.display=u?'none':''; $('keyVal').textContent=k; $('keyPh').style.display=k?'none':'';
+  $('urlCaret').style.visibility=caretOn(t,2.3,3.0,t>=T.urlType[0])?'visible':'hidden';
+  $('keyCaret').style.visibility=caretOn(t,3.0,3.75,t<T.keyType[1])?'visible':'hidden';
+  // QR unfolds diagonally once the short link exists
+  const qp=expoOut(inv(T.qrIn,T.qrIn+0.45,t))*200;
+  $('qr').style.clipPath=`polygon(0 0, ${qp}% 0, 0 ${qp}%)`;
+  const press=1-0.04*Math.sin(Math.PI*inv(4.94,5.12,t));
+  $('createBtn').style.transform=`scale(${press})`;
+}
+function links(t){
+  const on=t>=T.linksIn&&t<8.45; vis('sLinks',on); if(!on) return;
+  const cx=A.newAv.cx, cy=A.newAv.cy;
+  const R=maxCorner(cx,cy)*expoOut(inv(T.linksIn,6.15,t));
+  $('sLinks').style.clipPath=`circle(${R.toFixed(1)}px at ${cx}px ${cy}px)`;
+  const h=Math.max(0,CARD_H*S(t,5.9,20,0.86));
+  const top0=0; const nc=$('newCard');
+  nc.style.visibility=h<1?'hidden':'visible';
+  nc.style.height=h+'px'; nc.style.top=(top0+(CARD_H-h)/2)+'px';
+  $('newIn').style.top=((h-CARD_H)/2)+'px';
+  ['oc1','oc2','oc3'].forEach((id,i)=>{ $(id).style.top=((i+1)*(CARD_H+CARD_GAP)-(CARD_H-h)/2-(h<1?CARD_H/2:0)*0)+'px'; });
+  rise($('nt1'),T.cardText,null); rise($('nt2'),T.cardText+0.06,null);
+  const bw=A.badge.w*S(t,T.cardText+0.04,22,0.85); const b=$('nbadge'); b.style.width=bw+'px'; b.style.flex='none'; b.style.visibility=bw<2?'hidden':'visible';
+  let v=lerp(0,96,expoOut(inv(7.0,7.3,t))); v=lerp(v,248,expoOut(inv(7.5,7.8,t)));
+  $('nclicks').textContent=fmt(v);
+}
+// analytics
+function buildChart(){
+  let g=''; for(let i=0;i<=4;i++){ const y=lerp(CY1,CY0,i/4); g+=`<line x1="${CX0}" x2="${CX1}" y1="${y}" y2="${y}" stroke="#eeeeee" stroke-width="1" ${i?'stroke-dasharray="4 4"':''}/>`; }
+  $('grid').innerHTML=g;
+  let x=''; [0,7,14,21,29].forEach(i=>{ const xx=lerp(CX0,CX1,i/(N-1)); x+=`<text x="${xx}" y="${CY1+34}" text-anchor="middle" font-family="Satoshi" font-size="14" fill="#a3a3a3">${DATES[i]}</text>`; });
+  $('xlab').innerHTML=x;
+}
+function seriesBlend(t){ // returns sampled curve for current blend
+  const a=expoInOut(inv(10.22,10.6,t)), b=expoInOut(inv(11.22,11.6,t));
+  const C=CURVE.clicks,L=CURVE.leads,Sx=CURVE.sales;
+  return C.map((p,i)=>[p[0], lerp(lerp(p[1],L[i][1],a),Sx[i][1],b)]);
+}
+function analytics(t){
+  const on=t>=T.anIn&&t<12.82; vis('sAn',on); if(!on) return;
+  const c0=PTS.clicks[0]; const cx=A.chart.x+c0[0], cy=A.chart.y+c0[1];
+  if(t<12.5){ const R=maxCorner(cx,cy)*expoOut(inv(T.anIn,8.35,t)); $('sAn').style.clipPath=`circle(${R.toFixed(1)}px at ${cx}px ${cy}px)`; }
+  else { const c=expoInOut(inv(12.5,12.8,t)); const R=lerp(maxCorner(A.tabS.cx,A.tabS.b),0,c); $('sAn').style.clipPath=`circle(${R.toFixed(1)}px at ${A.tabS.cx}px ${A.tabS.b-6}px)`; }
+  const curve=seriesBlend(t);
+  const fx=t<T.drag[0]?penF(t):1; const xmax=lerp(CX0,CX1,clamp(fx));
+  const pts=curve.filter(p=>p[0]<=xmax+0.01); const end=curveAt('clicks',fx); if(t<T.drag[0]) pts.push(end);
+  if(pts.length>1){
+    const d='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L');
+    $('line').setAttribute('d',d);
+    $('area').setAttribute('d',d+`L${pts[pts.length-1][0].toFixed(1)} ${CY1}L${CX0} ${CY1}Z`);
+  } else { $('line').setAttribute('d',''); $('area').setAttribute('d',''); }
+  // totals
+  const cum=SER.clicks.reduce((a,v,i)=>a+(i/(N-1)<=fx+1e-6?v:0),0);
+  $('vC').textContent=fmt(t<T.pen[0]?0:cum);
+  $('vL').textContent=fmt(31*expoOut(inv(10.18,10.62,t)));
+  $('vS').textContent='$'+fmt(1240*expoOut(inv(11.45,12.0,t)));
+  $('ulC').style.transform=`translateY(${3*expoOut(inv(10.0,10.12,t))+0}px)`;
+  // scrub tooltip
+  const sOn=t>=T.drag[0]-0.02&&t<9.98;
+  const f=dragF(t); const p=curveAt('clicks',f); const idx=Math.round(f*(N-1));
+  $('scrub').style.display=sOn?'':'none'; $('scrub').setAttribute('x1',p[0]); $('scrub').setAttribute('x2',p[0]);
+  const tip=$('tip'); tip.style.display=sOn?'':'none';
+  if(sOn){ const o=expoOut(inv(T.drag[0],T.drag[0]+0.18,t))*(1-expoInOut(inv(9.8,9.96,t)));
+    tip.style.left=(p[0]>760?p[0]-22-tip.offsetWidth:p[0]+22)+'px'; tip.style.top=(124+p[1]-96)+'px';
+    tip.style.clipPath=`inset(0 0 ${((1-o)*100).toFixed(1)}% 0 round 8px)`;
+    $('tipD').textContent=DATES[idx]+', 2026'; $('tipV').textContent=SER.clicks[idx]; }
+}
+function endcard(t){
+  const on=t>=12.6; vis('sEnd',on); if(!on) return;
+  const wm=$('wm'); const f=S(t,T.wm+0.05,20,0.85);
+  wm.style.left=A.wmX+'px'; wm.style.top=(A.endY-12*A.wmK)+'px';
+  wm.style.clipPath=`inset(-10px ${((1-f)*100).toFixed(2)}% -10px -10px)`;
+  wm.style.transform=`translateX(${(-(1-f)*60).toFixed(1)}px)`;
+  rise($('tagi'),T.tag,null);
+  const cta=$('cta'); const s1=S(t,T.cta,26,0.85), s2=S(t,T.cta+0.07,22,0.85);
+  const fw=A.ctaW; const w=lerp(72,fw,s2)*1;
+  cta.style.width=w+'px'; cta.style.left=(W/2-w/2)+'px'; cta.style.transform=`scale(${s1})`; cta.style.visibility=s1<0.01?'hidden':'visible';
+  $('ctai').style.clipPath=`inset(0 ${((1-s2)*50).toFixed(1)}% 0 ${((1-s2)*50).toFixed(1)}%)`;
+}
+function renderDot(t){
+  const dot=$('dot'), mk=$('mark');
+  if(t<12.64){
+    const st=dotState(t); dot.style.display=st.w<0.3?'none':'';
+    const r=Math.min(st.w,st.h)/2;
+    dot.style.width=st.w+'px'; dot.style.height=st.h+'px'; dot.style.borderRadius=r+'px';
+    dot.style.transform=`translate(${(st.cx-st.w/2).toFixed(2)}px,${(st.cy-st.h/2).toFixed(2)}px)`;
+    const th=$('thumb'); const tv=st.thumb||0; th.style.display=tv>0.01?'':'none';
+    if(tv>0.01){ const d=12*clamp(tv*1.4); th.style.width=d+'px'; th.style.height=d+'px'; th.style.left=(st.w-2-6-d/2- (1-clamp(tv))*0)+'px'; th.style.top=(8-d/2)+'px'; }
+    // motion blur along velocity (local px)
+    const p=dotState(Math.max(0,t-1/60)); const vx=Math.abs(st.cx-p.cx), vy=Math.abs(st.cy-p.cy);
+    const bx=Math.min(10,vx*0.35), by=Math.min(10,vy*0.35);
+    if(bx+by>0.4){ $('dbg').setAttribute('stdDeviation',`${bx.toFixed(2)} ${by.toFixed(2)}`); dot.style.filter='url(#db)'; } else dot.style.filter='none';
+    mk.style.display='none';
+  } else {
+    dot.style.display='none'; mk.style.display='';
+    const m=markState(t); mk.style.width=2*m.R+'px'; mk.style.height=2*m.R+'px';
+    mk.style.transform=`translate(${(m.x-m.R).toFixed(2)}px,${(m.y-m.R).toFixed(2)}px)`;
+    $('mhole').setAttribute('r',(16*S(t,T.logo,24,0.82)).toFixed(3));
+    $('mslot').setAttribute('height',(49*expoOut(inv(T.logo+0.12,T.logo+0.38,t))).toFixed(3));
+    const k=expoInOut(inv(T.logo+0.05,T.logo+0.45,t));
+    const col=`rgb(${Math.round(lerp(59,0,k))},${Math.round(lerp(130,0,k))},${Math.round(lerp(246,0,k))})`;
+    $('mdisc').setAttribute('fill',col);
+  }
+}
+function renderCursor(t,c){
+  const cur=$('cursor');
+  const on=t>=1.05&&t<12.3; cur.style.display=on?'':'none'; if(!on) return;
+  const p=cursorPos(t); const s=toScreen(c,p);
+  let sc=1; for(const k of CLICKS){ sc=Math.min(sc,1-0.16*Math.sin(Math.PI*inv(k-0.07,k+0.11,t))); }
+  if(t>=T.drag[0]-0.04&&t<=T.drag[1]+0.06) sc=Math.min(sc,0.86);
+  cur.style.transform=`translate(${(s[0]-4).toFixed(2)}px,${(s[1]-3).toFixed(2)}px) scale(${sc.toFixed(3)})`;
+}
+window.seek=function(t){
+  T_now=t;
+  const c=cam(t), cp=cam(Math.max(0,t-1/60));
+  $('world').style.transform=`translate(${(W/2-c.x*c.z).toFixed(3)}px,${(H/2-c.y*c.z).toFixed(3)}px) scale(${c.z.toFixed(5)})`;
+  // camera motion blur in screen space (follows speed & direction)
+  const dx=Math.abs((c.x-cp.x)*c.z), dy=Math.abs((c.y-cp.y)*c.z), dz=Math.abs(Math.log(c.z/cp.z))*700;
+  const bx=Math.min(10,dx*0.22+dz*0.18), by=Math.min(10,dy*0.22+dz*0.18);
+  if(bx+by>0.6){ $('mbg').setAttribute('stdDeviation',`${bx.toFixed(2)} ${by.toFixed(2)}`); $('camwrap').style.filter='url(#mb)'; } else $('camwrap').style.filter='none';
+  hook(t); modal(t); links(t); analytics(t); endcard(t); renderDot(t); renderCursor(t,c);
+};
+window.ready=(async()=>{
+  await document.fonts.load('700 100px Satoshi'); await document.fonts.load('500 14px Satoshi'); await document.fonts.ready;
+  ['sHook','sModal','sLinks','sAn','sEnd'].forEach(id=>vis(id,true));
+  measure();
+  // CTA natural width
+  const cta=$('cta'); cta.style.width='auto'; cta.style.padding='0 44px'; A.ctaW=cta.getBoundingClientRect().width; cta.style.padding='0';
+  buildChart(); buildShots(); buildCursor();
+  window.seek(0); return true;
+})();
+
+</script>
+</body>
+</html>
